@@ -80,25 +80,43 @@ fn main() {
 // test 
 #[test] 
 fn testFIROutputIsZero() {
-    let mut FIRZeroInput: &[&[f32]] = &[&[]];
+    let mut FIRZeroInput: &[&[f32]] = &[&[1.0]];
     let mut FIRZeroOutput: &mut [&mut [f32]] = &mut [&mut []];
 
-    let mut FIRZeroFilter = CombFilter::new(FilterType::FIR, 0.0, 44100.0, 0);
+    let mut FIRZeroFilter = CombFilter::new(FilterType::FIR, 1.0, 1.0, 1);
     CombFilter::process(&mut FIRZeroFilter, FIRZeroInput, FIRZeroOutput);
 
     assert!(FIRZeroOutput == FIRZeroInput);
 }
 
 #[test] // epsilon (expected - receive.abs) < epsilon
+
+// Checks to see if IIR is equal to input and if the gain is 1. 
 fn testIIRAmountofMagnitude() {
-    assert!(true);
+    let mut IIRAmountofMagnitude: &[&[f32]] = &[&[1.0]];
+    let mut IIRAmountOutput: &mut [&mut [f32]] = &mut [&mut []];
+    let mut IIRAmountFilter = CombFilter::new(FilterType::FIR, 1.0, 1.0, 1);
+
+    CombFilter::set_param(&mut IIRAmountFilter, comb_filter::FilterParam::Gain , 1.0).expect("Unable to set Param");
+    CombFilter::process(&mut IIRAmountFilter, IIRAmountofMagnitude, IIRAmountOutput);
+
+    assert!(IIRAmountofMagnitude == IIRAmountOutput && CombFilter::get_param(&mut IIRAmountFilter, comb_filter::FilterParam::Gain) == 1.0);
 }
 
 #[test]
-fn testBothVaryingInputSize() {
-    assert!(false);
+fn testBothVaryingInputSize() {       
+    let mut varyingInput: &[&[f32]] = &[&[1.0, 2.0], &[1.0, 2.0, 3.0, 4.0]];
+    let mut varyingOutput: &mut [&mut [f32]] = &mut [&mut []];
+    let mut varyingFilter = CombFilter::new(FilterType::FIR, 1.0, 1.0, 1);
+
+    CombFilter::set_param(&mut varyingFilter, comb_filter::FilterParam::Gain , 1.0).expect("Unable to set Param");
+    CombFilter::process(&mut varyingFilter, varyingInput, varyingOutput); 
+
+    assert!(varyingOutput == varyingInput);
+
 }
 
+#[test]
 fn testIIRZeroInput() {
     let mut IIRZeroInput: &[&[f32]] = &[&[]];
     let mut IIRZeroOutput: &mut [&mut [f32]] = &mut [&mut []];
@@ -108,12 +126,12 @@ fn testIIRZeroInput() {
     assert!(IIRZeroOutput == &[&[]]);
 }
 
+#[test]
 fn testFIRZeroInput() {
     let mut FIRZeroInput: &[&[f32]] = &[&[]];
     let mut FIRZeroOutput: &mut [&mut [f32]] = &mut [&mut []];
     let mut FIRZeroFilter = CombFilter::new(FilterType::FIR, 0.0, 44100.0, 0);
     CombFilter::process(&mut FIRZeroFilter, FIRZeroInput, FIRZeroOutput);
-
     assert!(FIRZeroOutput == &[&[]]);
 }
 
@@ -128,5 +146,5 @@ fn testGainParams() {
 fn testDelayParams() {
     let mut setDelayFilter = CombFilter::new(FilterType::FIR, 3.0, 44100.0, 0);
     CombFilter::set_param(&mut setDelayFilter, comb_filter::FilterParam::Delay, 0.1).expect("Unable to set Param");
-    assert!(setDelayFilter.get_param(comb_filter::FilterParam::Gain) == 0.1);
+    assert!(setDelayFilter.get_param(comb_filter::FilterParam::Delay) == 0.1);
 }
