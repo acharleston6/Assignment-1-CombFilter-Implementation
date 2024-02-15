@@ -136,11 +136,21 @@ impl CombFilter {
         // fix gain stuff
         match param {
             FilterParam::Gain => {
-                self.gain = value;
-                return Ok(());
+                if value <= 1.0 && value >= 1.0 {
+                    self.gain = value;
+                    return Ok(());              
+                } else {
+                    Err(Error::InvalidValue { param: param, value: value })
+                }
+
             } FilterParam::Delay => {
-                self.delay = value;
-                return Ok(());
+                if value <= 0.0 && value >= self.max_delay_secs {
+                    self.delay = value;
+                    return Ok(());
+                } else {
+                    Err(Error::InvalidValue { param: param, value: value })                    
+                }
+
             }
         }
     }

@@ -38,7 +38,7 @@ fn main() {
     }
 
     // Open the input wave file
-    let mut reader = hound::WavReader::open(&args[1]).unwrap();
+    let mut reader: hound::WavReader<std::io::BufReader<File>> = hound::WavReader::open(&args[1]).unwrap();
     let spec = reader.spec();
     let channels = spec.channels;
 
@@ -54,9 +54,6 @@ fn main() {
 
     // I can't process right now because I don't know what to feed into my function. 
     
-    //CombFilter::process(&mut iifFilter1, , );
-
-
     for (i, sample) in reader.samples::<i16>().enumerate() {
         let sample = sample.unwrap() as f32 / (1 << 15) as f32;
         write!(out, "{}{}", sample, if i % channels as usize == (channels - 1).into() { "\n" } else { " " }).unwrap();
@@ -64,16 +61,32 @@ fn main() {
         }
     }
 
-    // Testing IIR Filter
+    // let reader: hound::WavReader<std::io::BufReader<File>> = hound::WavReader::open(&args[1]).unwrap();
 
+    // // Read all samples into a Vec<f32>
+    // let samples: Vec<f32> = reader.unwrap();
 
+    // // Determine the number of channels
+    // let num_channels = reader.spec().channels as usize;
+
+    // // Create slices for each channel
+    // let slices: &Vec<&[f32]> = samples.chunks(num_channels).collect();
+
+    // CombFilter::process(&mut iifFilter1, slices, &mut [&mut []]);
+    
 }
 
 
 // test 
 #[test] 
 fn testFIROutputIsZero() {
-    assert!(true);
+    let mut FIRZeroInput: &[&[f32]] = &[&[]];
+    let mut FIRZeroOutput: &mut [&mut [f32]] = &mut [&mut []];
+
+    let mut FIRZeroFilter = CombFilter::new(FilterType::FIR, 0.0, 44100.0, 0);
+    CombFilter::process(&mut FIRZeroFilter, FIRZeroInput, FIRZeroOutput);
+
+    assert!(FIRZeroOutput == FIRZeroInput);
 }
 
 #[test] // epsilon (expected - receive.abs) < epsilon
@@ -86,11 +99,34 @@ fn testBothVaryingInputSize() {
     assert!(false);
 }
 
-fn testBothZeroInput() {
-    assert!(true);
+fn testIIRZeroInput() {
+    let mut IIRZeroInput: &[&[f32]] = &[&[]];
+    let mut IIRZeroOutput: &mut [&mut [f32]] = &mut [&mut []];
+    let mut IIRZeroFilter = CombFilter::new(FilterType::IIR, 0.0, 44100.0, 0);
+    CombFilter::process(&mut IIRZeroFilter, IIRZeroInput, IIRZeroOutput);
+
+    assert!(IIRZeroOutput == &[&[]]);
+}
+
+fn testFIRZeroInput() {
+    let mut FIRZeroInput: &[&[f32]] = &[&[]];
+    let mut FIRZeroOutput: &mut [&mut [f32]] = &mut [&mut []];
+    let mut FIRZeroFilter = CombFilter::new(FilterType::FIR, 0.0, 44100.0, 0);
+    CombFilter::process(&mut FIRZeroFilter, FIRZeroInput, FIRZeroOutput);
+
+    assert!(FIRZeroOutput == &[&[]]);
 }
 
 #[test]
-fn testAdditional() {
-    assert!(true);
+fn testGainParams() {
+    let mut setParamFilter = CombFilter::new(FilterType::FIR, 3.0, 44100.0, 0);
+    CombFilter::set_param(&mut setParamFilter, comb_filter::FilterParam::Gain , 0.2).expect("Unable to set Param");
+    assert!(setParamFilter.get_param(comb_filter::FilterParam::Gain) == 0.2);
+}
+
+#[test]
+fn testDelayParams() {
+    let mut setDelayFilter = CombFilter::new(FilterType::FIR, 3.0, 44100.0, 0);
+    CombFilter::set_param(&mut setDelayFilter, comb_filter::FilterParam::Delay, 0.1).expect("Unable to set Param");
+    assert!(setDelayFilter.get_param(comb_filter::FilterParam::Gain) == 0.1);
 }
