@@ -3,4 +3,4 @@
 
 Here are the plots two different wav files after I applied the filter to them in MatLab.
 
-![plot](./Assignment-1-CombFilter-Implementation/MatLab/wavTester.png)
+![plot](./MatLab/wavTester.png)
